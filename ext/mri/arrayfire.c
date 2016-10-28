@@ -8,26 +8,21 @@ VALUE Device = Qnil;
 VALUE Blas = Qnil;
 VALUE Lapack = Qnil;
 
-
-struct myStruct
+typedef struct AF_STRUCT
 {
-  int a;
-  int b;
-};
-
-static void mystruct_free(void *s)
-{
-  xfree(s);
-}
-
-
+  size_t dimension;     // Method of storage (csc, dense, etc).
+  size_t array;
+}afstruct;
 
 // prototypes
 void Init_arrayfire();
 VALUE method_test1(VALUE self);
-VALUE method_arf_init(VALUE self, VALUE val);
+// VALUE method_arf_init(VALUE self, VALUE val);
+VALUE method_arf_init(int argc, VALUE* argv, VALUE self);
 VALUE arf_alloc(VALUE self);
-void arf_free(int* data);
+void arf_free(afstruct* af);
+static VALUE dimension(VALUE self);
+static VALUE array(VALUE self);
 
 
 void Init_arrayfire() {
@@ -36,7 +31,9 @@ void Init_arrayfire() {
 
   Af_Array = rb_define_class_under(ArrayFire, "Af_Array", rb_cObject);
   rb_define_alloc_func(Af_Array, arf_alloc);
-  rb_define_method(Af_Array, "initialize", method_arf_init, 1);
+  rb_define_method(Af_Array, "initialize", method_arf_init, -1);
+  rb_define_method(Af_Array, "dimension", dimension, 0);
+  rb_define_method(Af_Array, "array", array, 0);
 
   Device = rb_define_class_under(ArrayFire, "Device", rb_cObject);
 
@@ -46,21 +43,19 @@ void Init_arrayfire() {
 }
 
 VALUE method_test1(VALUE self) {
-  // af_info();
   VALUE x;
-  // char x[] = "hello";
   x = rb_str_new_cstr("Hello, world!");
-  // int x = 10;
   return x;
 }
 
-VALUE method_arf_init(VALUE self, VALUE val)
+VALUE method_arf_init(int argc, VALUE* argv, VALUE self)
 {
-  int* data;
-  /* unwrap */
-  Data_Get_Struct(self, int, data);
 
-  *data = NUM2INT(val);
+  afstruct* afarray;
+  Data_Get_Struct(self, afstruct, afarray);
+  afarray->dimension = argv[0];
+  afarray->array = argv[1];
+
 
   return self;
 }
@@ -68,13 +63,32 @@ VALUE method_arf_init(VALUE self, VALUE val)
 VALUE arf_alloc(VALUE self)
 {
   /* allocate */
-  int* data = malloc(sizeof(int));
-
+  // // int* data = malloc(sizeof(int));
+  // LST_String * string = malloc(sizeof(LST_String));
+  afstruct * af = malloc(sizeof(afstruct));
   /* wrap */
-  return Data_Wrap_Struct(self, NULL, arf_free, data);
+  return Data_Wrap_Struct(self, NULL, arf_free, af);
 }
 
-void arf_free(int* data)
+void arf_free(afstruct* af)
 {
-  free(data);
+  free(af);
+}
+
+static VALUE dimension(VALUE self)
+{
+  afstruct * af;
+
+  Data_Get_Struct(self, afstruct, af);
+
+  return af->dimension;
+}
+
+static VALUE array(VALUE self)
+{
+  afstruct * af;
+
+  Data_Get_Struct(self, afstruct, af);
+
+  return af->array;
 }
