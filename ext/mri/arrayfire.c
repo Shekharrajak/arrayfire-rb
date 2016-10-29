@@ -1,6 +1,9 @@
 #include "ruby.h"
 
 #include "arrayfire.h"
+// using namespace af;
+// static af_array A;
+#include <math.h>
 
 VALUE ArrayFire = Qnil;
 VALUE Af_Array = Qnil;
@@ -14,6 +17,11 @@ typedef struct AF_STRUCT
   size_t array;
 }afstruct;
 
+
+
+static af_array A; // populated before each timing
+
+
 // prototypes
 void Init_arrayfire();
 VALUE method_test1(VALUE self);
@@ -23,6 +31,7 @@ VALUE arf_alloc(VALUE self);
 void arf_free(afstruct* af);
 static VALUE dimension(VALUE self);
 static VALUE array(VALUE self);
+static VALUE get_info(VALUE self);
 
 
 void Init_arrayfire() {
@@ -36,6 +45,7 @@ void Init_arrayfire() {
   rb_define_method(Af_Array, "array", array, 0);
 
   Device = rb_define_class_under(ArrayFire, "Device", rb_cObject);
+  rb_define_method(Device, "getInfo", get_info, 0);
 
   Blas = rb_define_class_under(ArrayFire, "BLAS", rb_cObject);
 
@@ -64,7 +74,6 @@ VALUE arf_alloc(VALUE self)
 {
   /* allocate */
   // // int* data = malloc(sizeof(int));
-  // LST_String * string = malloc(sizeof(LST_String));
   afstruct * af = malloc(sizeof(afstruct));
   /* wrap */
   return Data_Wrap_Struct(self, NULL, arf_free, af);
@@ -91,4 +100,11 @@ static VALUE array(VALUE self)
   Data_Get_Struct(self, afstruct, af);
 
   return af->array;
+}
+
+static VALUE get_info(VALUE self)
+{
+  VALUE x;
+  af_info();
+  return x;
 }
