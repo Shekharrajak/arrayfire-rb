@@ -1,9 +1,10 @@
-#include "ruby.h"
+// #include "ruby.h"
 
 #include "arrayfire.h"
-// using namespace af;
-// static af_array A;
+#include <stdio.h>
 #include <math.h>
+
+#include "ruby_arrayfire.h"
 
 VALUE ArrayFire = Qnil;
 VALUE Af_Array = Qnil;
@@ -19,11 +20,8 @@ typedef struct AF_STRUCT
 
 
 
-static af_array A; // populated before each timing
-
-
 // prototypes
-void Init_arrayfire();
+// void Init_arrayfire();
 VALUE method_test1(VALUE self);
 // VALUE method_arf_init(VALUE self, VALUE val);
 VALUE method_arf_init(int argc, VALUE* argv, VALUE self);
@@ -32,7 +30,6 @@ void arf_free(afstruct* af);
 static VALUE dimension(VALUE self);
 static VALUE array(VALUE self);
 static VALUE get_info(VALUE self);
-
 
 void Init_arrayfire() {
   ArrayFire = rb_define_module("ArrayFire");
@@ -106,5 +103,7 @@ static VALUE get_info(VALUE self)
 {
   VALUE x;
   af_info();
+  arf::test();
   return x;
 }
+

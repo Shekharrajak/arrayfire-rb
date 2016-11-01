@@ -1,8 +1,13 @@
-require 'mkmf'
+require File.expand_path("../../lib/arrayfire/mkmf", __FILE__)
 
 extension_name = 'arrayfire'
 
 dir_config(extension_name)
+
+$INSTALLFILES = [
+  ['ruby_arrayfire.h'       , '$(archdir)'],
+  ['ruby_arrayfire.hpp'     , '$(archdir)'],
+]
 
 $DEBUG = true
 $CFLAGS = ["-Wall -Werror=return-type",$CFLAGS].join(" ")
@@ -24,4 +29,3 @@ have_library('cufft')
 have_library('cublas')
 
 create_makefile(extension_name)
-
