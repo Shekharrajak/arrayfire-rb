@@ -1,4 +1,4 @@
-require File.expand_path("../../lib/arrayfire/mkmf", __FILE__)
+require File.expand_path("../../../lib/arrayfire/mkmf", __FILE__)
 
 extension_name = 'arrayfire'
 
@@ -7,6 +7,7 @@ dir_config(extension_name)
 $INSTALLFILES = [
   ['ruby_arrayfire.h'       , '$(archdir)'],
   ['ruby_arrayfire.hpp'     , '$(archdir)'],
+  ['arrayfire_config.h', '$(archdir)'],
 ]
 
 $DEBUG = true
@@ -28,4 +29,9 @@ have_library('cudart')
 have_library('cufft')
 have_library('cublas')
 
+basenames = %w{ruby_arrayfire}
+$objs = basenames.map { |b| "#{b}.o"   }
+$srcs = basenames.map { |b| "#{b}.cpp" }
+
+create_conf_h("arrayfire_config.h")
 create_makefile(extension_name)

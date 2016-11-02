@@ -5,6 +5,12 @@
 /*
  * Functions
  */
+
+#ifdef __cplusplus
+typedef VALUE (*METHOD)(...);
+//}; // end of namespace nm
+#endif
+
 #include <ruby.h>
 // #include <test.cpp>
 #ifdef __cplusplus
@@ -19,3 +25,4 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
