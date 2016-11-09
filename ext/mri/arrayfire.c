@@ -4,20 +4,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "ruby_arrayfire.h"
-
 VALUE ArrayFire = Qnil;
 VALUE Af_Array = Qnil;
 VALUE Device = Qnil;
 VALUE Blas = Qnil;
 VALUE Lapack = Qnil;
-
-typedef struct AF_STRUCT
-{
-  size_t dimension;     // Method of storage (csc, dense, etc).
-  size_t array;
-}afstruct;
-
 
 
 // prototypes
@@ -29,6 +20,7 @@ static VALUE arf_alloc(VALUE klass);
 static void arf_free(afstruct* af);
 static VALUE dimension(VALUE self);
 static VALUE array(VALUE self);
+static void array2(VALUE self);
 static VALUE get_info(VALUE self);
 
 void Init_arrayfire() {
@@ -40,6 +32,7 @@ void Init_arrayfire() {
   rb_define_method(Af_Array, "initialize", (METHOD)arf_init, -1);
   rb_define_method(Af_Array, "dimension", (METHOD)dimension, 0);
   rb_define_method(Af_Array, "array", (METHOD)array, 0);
+  rb_define_method(Af_Array, "array2", (METHOD)array2, 0);
 
   Device = rb_define_class_under(ArrayFire, "Device", rb_cObject);
   rb_define_method(Device, "getInfo", (METHOD)get_info, 0);
@@ -57,13 +50,12 @@ VALUE test1(VALUE self) {
 
 VALUE arf_init(int argc, VALUE* argv, VALUE self)
 {
-
   afstruct* afarray;
   Data_Get_Struct(self, afstruct, afarray);
   afarray->dimension = argv[0];
   afarray->array = argv[1];
 
-
+  arf::createArray(argv[1], afarray);
   return self;
 }
 
@@ -97,6 +89,13 @@ static VALUE array(VALUE self)
   Data_Get_Struct(self, afstruct, af);
 
   return af->array;
+}
+
+static void array2(VALUE self){
+  afstruct * af;
+
+  Data_Get_Struct(self, afstruct, af);
+  af_print_array(af->arr);
 }
 
 static VALUE get_info(VALUE self)

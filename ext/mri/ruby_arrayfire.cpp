@@ -46,6 +46,24 @@ namespace arf {
       }
       printf(" ### peak %g GFLOPS\n", peak);
   }
+
+  static void createArray(VALUE args, afstruct *afarray)
+  {
+    af_array arr;
+
+    double data[4] = {1000.0, 2.0, 3.4, 7.0};
+    const dim_t dims[2] = {2,2};
+    af_array a2;
+    af_create_array( &afarray->arr, &args, 2, dims,f64 );
+    af_create_array( &arr, data, 2, dims,f64 );
+    af_create_array( &a2, data, 2, dims,f64 );
+    // array A(100, f64);
+    af_array out;
+
+    af_add( &out, arr, a2, 0);
+    af_print_array(out);
+
+  }
 }
 extern "C" {
   #include "arrayfire.c"

@@ -2,6 +2,14 @@
   #define RUBY_ARRAYFIRE_H
 #endif
 
+
+typedef struct AF_STRUCT
+{
+  af_array arr;
+  size_t dimension;     // Method of storage (csc, dense, etc).
+  size_t array;
+}afstruct;
+
 /*
  * Functions
  */
@@ -20,9 +28,8 @@ extern "C" {
   void Init_arrayfire();
   static void test();
   // External API
-
+  static void createArray(VALUE args, afstruct *afarray);
 
 #ifdef __cplusplus
 }
 #endif
-
