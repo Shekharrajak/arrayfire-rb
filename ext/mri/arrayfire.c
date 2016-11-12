@@ -18,6 +18,7 @@ static VALUE test1(VALUE self);
 static VALUE arf_init(int argc, VALUE* argv, VALUE self);
 static VALUE arf_alloc(VALUE klass);
 static void arf_free(afstruct* af);
+static VALUE ndims(VALUE self);
 static VALUE dimension(VALUE self);
 static VALUE array(VALUE self);
 static void array2(VALUE self);
@@ -30,6 +31,7 @@ void Init_arrayfire() {
   Af_Array = rb_define_class_under(ArrayFire, "Af_Array", rb_cObject);
   rb_define_alloc_func(Af_Array, arf_alloc);
   rb_define_method(Af_Array, "initialize", (METHOD)arf_init, -1);
+  rb_define_method(Af_Array, "ndims", (METHOD)ndims, 0);
   rb_define_method(Af_Array, "dimension", (METHOD)dimension, 0);
   rb_define_method(Af_Array, "array", (METHOD)array, 0);
   rb_define_method(Af_Array, "array2", (METHOD)array2, 0);
@@ -52,10 +54,11 @@ VALUE arf_init(int argc, VALUE* argv, VALUE self)
 {
   afstruct* afarray;
   Data_Get_Struct(self, afstruct, afarray);
-  afarray->dimension = argv[0];
-  afarray->array = argv[1];
+  afarray->ndims = argv[0];
+  afarray->dimension = argv[1];
+  afarray->array = argv[2];
 
-  arf::createArray(argv[1], afarray);
+  arf::createArray(argv[2], afarray);
   return self;
 }
 
@@ -71,6 +74,15 @@ static VALUE arf_alloc(VALUE klass)
 static void arf_free(afstruct* af)
 {
   free(af);
+}
+
+static VALUE ndims(VALUE self)
+{
+  afstruct * af;
+
+  Data_Get_Struct(self, afstruct, af);
+
+  return af->ndims;
 }
 
 static VALUE dimension(VALUE self)
