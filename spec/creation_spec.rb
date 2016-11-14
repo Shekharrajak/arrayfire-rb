@@ -14,4 +14,14 @@ describe ArrayFire::Af_Array do
       expect(i.dtype).to eq :float64
     }
   end
+
+  context '#addition' do
+    let(:a) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
+    let(:b) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
+    let(:a) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
+    subject {c}
+    it {expect(a+b).to eq c}
+    it {expect(c.ndims).to eq a.ndims}
+    it {expect(c.dimension).to eq a.dimension}
+  end
 end
