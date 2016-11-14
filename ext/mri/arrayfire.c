@@ -24,6 +24,25 @@ static VALUE array(VALUE self);
 static void array2(VALUE self);
 static VALUE get_info(VALUE self);
 
+#define DEF_ELEMENTWISE_RUBY_ACCESSOR(oper, name)                 \
+static VALUE arf_ew_##name(VALUE left_val, VALUE right_val) {  \
+  return elementwise_op(arf::EW_##oper, left_val, right_val);  \
+}
+
+#define DECL_ELEMENTWISE_RUBY_ACCESSOR(name)    static VALUE arf_ew_##name(VALUE left_val, VALUE right_val);
+DECL_ELEMENTWISE_RUBY_ACCESSOR(add)
+
+
+static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val);
+/*
+ * Macro defines an element-wise accessor function for some operation.
+ *
+ * This is only responsible for the Ruby accessor! You still have to write the actual functions, obviously.
+ */
+
+static VALUE arf_eqeq(VALUE left, VALUE right);
+
+
 void Init_arrayfire() {
   ArrayFire = rb_define_module("ArrayFire");
   rb_define_method(ArrayFire, "test1", (METHOD)test1, 0);
@@ -35,6 +54,8 @@ void Init_arrayfire() {
   rb_define_method(Af_Array, "dimension", (METHOD)dimension, 0);
   rb_define_method(Af_Array, "array", (METHOD)array, 0);
   rb_define_method(Af_Array, "array2", (METHOD)array2, 0);
+  rb_define_method(Af_Array, "+",(METHOD)arf_ew_add,1);
+  rb_define_method(Af_Array, "==",(METHOD)arf_eqeq,1);
 
   Device = rb_define_class_under(ArrayFire, "Device", rb_cObject);
   rb_define_method(Device, "getInfo", (METHOD)get_info, 0);
@@ -118,3 +139,13 @@ static VALUE get_info(VALUE self)
   return x;
 }
 
+
+DEF_ELEMENTWISE_RUBY_ACCESSOR(ADD, add)
+
+static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val) {
+  return Qfalse;
+}
+
+static VALUE arf_eqeq(VALUE left, VALUE right) {
+  return Qfalse;
+}

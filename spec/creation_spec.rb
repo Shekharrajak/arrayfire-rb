@@ -18,10 +18,19 @@ describe ArrayFire::Af_Array do
   context '#addition' do
     let(:a) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
     let(:b) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
-    let(:a) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
+    let(:c) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
     subject {c}
     it {expect(a+b).to eq c}
     it {expect(c.ndims).to eq a.ndims}
     it {expect(c.dimension).to eq a.dimension}
+  end
+
+  context '#Equality' do
+    let(:a) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
+    let(:b) { ArrayFire::Af_Array.new 2, [2,2],[1,2,3,4] }
+    subject {c}
+    it {expect(a).to eq b}
+    it {expect(b.ndims).to eq a.ndims}
+    it {expect(b.dimension).to eq a.dimension}
   end
 end

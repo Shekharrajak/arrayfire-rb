@@ -13,6 +13,21 @@
 
 namespace arf {
 
+  enum ewop_t {
+    EW_ADD,
+    EW_SUB,
+    EW_MUL,
+    EW_DIV,
+    EW_POW,
+    EW_MOD,
+    EW_EQEQ,
+    EW_NEQ,
+    EW_LT,
+    EW_GT,
+    EW_LEQ,
+    EW_GEQ,
+  };
+
   // #include <cstdlib>
   using namespace af;
 // create a small wrapper to benchmark
