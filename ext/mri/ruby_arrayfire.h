@@ -6,9 +6,9 @@
 typedef struct AF_STRUCT
 {
   af_array arr;
-  int ndims;
-  size_t dimension;     // Method of storage (csc, dense, etc).
-  size_t array;
+  size_t ndims;
+  size_t* dimension;     // Method of storage (csc, dense, etc).
+  size_t* array;
 }afstruct;
 
 /*

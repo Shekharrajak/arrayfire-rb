@@ -40,7 +40,7 @@ static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val);
  * This is only responsible for the Ruby accessor! You still have to write the actual functions, obviously.
  */
 
-static VALUE arf_eqeq(VALUE left, VALUE right);
+static VALUE arf_eqeq(VALUE left_val, VALUE right_val);
 
 
 void Init_arrayfire() {
@@ -76,10 +76,17 @@ VALUE arf_init(int argc, VALUE* argv, VALUE self)
   afstruct* afarray;
   Data_Get_Struct(self, afstruct, afarray);
   afarray->ndims = argv[0];
-  afarray->dimension = argv[1];
-  afarray->array = argv[2];
+  afarray->dimension = &argv[1];
+  size_t *myGlobalArray;
+  memcpy(&myGlobalArray, argv[1], argv[0] * sizeof(size_t) );
+  // ALLOC_N(type, n)
+  afarray->array = &argv[2];
+  // for(size_t i = 0; i < argv[0]; i++){
+  //   // count *= left->dimension[i];
+  //   printf("%d\n",myGlobalArray[i]);
+  // }
 
-  arf::createArray(argv[2], afarray);
+  arf::createArray(&argv[2], afarray);
   return self;
 }
 
@@ -112,7 +119,7 @@ static VALUE dimension(VALUE self)
 
   Data_Get_Struct(self, afstruct, af);
 
-  return af->dimension;
+  return *af->dimension;
 }
 
 static VALUE array(VALUE self)
@@ -121,7 +128,7 @@ static VALUE array(VALUE self)
 
   Data_Get_Struct(self, afstruct, af);
 
-  return af->array;
+  return *af->array;
 }
 
 static void array2(VALUE self){
@@ -143,9 +150,63 @@ static VALUE get_info(VALUE self)
 DEF_ELEMENTWISE_RUBY_ACCESSOR(ADD, add)
 
 static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val) {
-  return Qfalse;
+
+  afstruct* left;
+  afstruct* right;
+  afstruct* result = ALLOC(afstruct);
+
+  Data_Get_Struct(left_val, afstruct, left);
+  Data_Get_Struct(right_val, afstruct, right);
+
+
+  result->ndims = left->ndims;
+  result->dimension = left->dimension;
+  af_add( &result->arr, left->arr, right->arr, 0);
+
+  return Data_Wrap_Struct(CLASS_OF(left_val), NULL, arf_free, result);
 }
 
-static VALUE arf_eqeq(VALUE left, VALUE right) {
-  return Qfalse;
+static VALUE arf_eqeq(VALUE left_val, VALUE right_val) {
+  afstruct* left;
+  afstruct* right;
+
+  bool result = true;
+
+  size_t i;
+  size_t count = 1;
+
+  Data_Get_Struct(left_val, afstruct, left);
+  Data_Get_Struct(right_val, afstruct, right);
+
+  printf("%d\n", left->ndims);
+
+  // for(size_t i = 0; i < left->ndims; i++){
+  //   count *= left->dimension[i];
+  // }
+
+  // for(size_t i = 0; i < count; i++){
+  //   if(left->array[i]!= right->array[i]){
+  //     return Qfalse;
+  //   }
+  // }
+
+  return Qtrue;
 }
+
+// void arf_register_values(VALUE* values, size_t n) {
+//   if (!gc_value_holder_struct)
+//     __nm_initialize_value_container();
+//   if (values) {
+//     NM_GC_LL_NODE* to_insert = NULL;
+//     if (allocated_pool->start) {
+//       to_insert = allocated_pool->start;
+//       allocated_pool->start = to_insert->next;
+//     } else {
+//       to_insert = NM_ALLOC_NONRUBY(NM_GC_LL_NODE);
+//     }
+//     to_insert->val = values;
+//     to_insert->n = n;
+//     to_insert->next = gc_value_holder_struct->start;
+//     gc_value_holder_struct->start = to_insert;
+//   }
+// }
