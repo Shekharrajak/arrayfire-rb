@@ -24,6 +24,8 @@ static VALUE array(VALUE self);
 static void array2(VALUE self);
 static VALUE get_info(VALUE self);
 
+static size_t*  interpret_shape(VALUE arg, size_t* dim);
+
 #define DEF_ELEMENTWISE_RUBY_ACCESSOR(oper, name)                 \
 static VALUE arf_ew_##name(VALUE left_val, VALUE right_val) {  \
   return elementwise_op(arf::EW_##oper, left_val, right_val);  \
@@ -75,20 +77,25 @@ VALUE arf_init(int argc, VALUE* argv, VALUE self)
 {
   afstruct* afarray;
   Data_Get_Struct(self, afstruct, afarray);
-  afarray->ndims = argv[0];
-  afarray->dimension = &argv[1];
-  size_t *myGlobalArray;
-  memcpy(&myGlobalArray, argv[1], argv[0] * sizeof(size_t) );
-  // ALLOC_N(type, n)
-  afarray->array = &argv[2];
-  // for(size_t i = 0; i < argv[0]; i++){
-  //   // count *= left->dimension[i];
-  //   printf("%d\n",myGlobalArray[i]);
-  // }
+  afarray->ndims = FIX2LONG(argv[0]);
+  afarray->dimension = ALLOC_N(size_t, argv[0]);
+  size_t count = 1;
+  for (size_t index = 0; index < FIX2LONG(argv[0]); index++) {
+    afarray->dimension[index] = FIX2UINT(RARRAY_AREF(argv[1], index));
+    printf("%d\n", afarray->dimension[index]);
+    count *= afarray->dimension[index];
+  }
+  afarray->count = count;
+  afarray->array = ALLOC_N(size_t, count);
+  for (size_t index = 0; index < count; index++) {
+    afarray->array[index] = FIX2INT(RARRAY_AREF(argv[2], index));
+  }
 
-  arf::createArray(&argv[2], afarray);
+  // arf::createArray(afarray);
+  // af_create_array( &afarray->arr, &afarray->array, ndims, dimension,f64 );
   return self;
 }
+
 
 static VALUE arf_alloc(VALUE klass)
 {
@@ -110,7 +117,7 @@ static VALUE ndims(VALUE self)
 
   Data_Get_Struct(self, afstruct, af);
 
-  return af->ndims;
+  return INT2NUM(af->ndims);
 }
 
 static VALUE dimension(VALUE self)
@@ -119,7 +126,7 @@ static VALUE dimension(VALUE self)
 
   Data_Get_Struct(self, afstruct, af);
 
-  return *af->dimension;
+  return rb_ary_new4(af->ndims, af->dimension);
 }
 
 static VALUE array(VALUE self)
@@ -127,8 +134,9 @@ static VALUE array(VALUE self)
   afstruct * af;
 
   Data_Get_Struct(self, afstruct, af);
-
-  return *af->array;
+  printf("%d\n", af->count);
+  // return Qnil;
+  return rb_ary_new4(af->count, af->array);
 }
 
 static void array2(VALUE self){
@@ -180,33 +188,17 @@ static VALUE arf_eqeq(VALUE left_val, VALUE right_val) {
 
   printf("%d\n", left->ndims);
 
-  // for(size_t i = 0; i < left->ndims; i++){
-  //   count *= left->dimension[i];
-  // }
+  for(size_t i = 0; i < left->ndims; i++){
+    if(left->dimension[i]!= right->dimension[i]){
+      return Qfalse;
+    }
+  }
 
-  // for(size_t i = 0; i < count; i++){
-  //   if(left->array[i]!= right->array[i]){
-  //     return Qfalse;
-  //   }
-  // }
+  for(size_t i = 0; i < left->count; i++){
+    if(left->array[i]!= right->array[i]){
+      return Qfalse;
+    }
+  }
 
   return Qtrue;
 }
-
-// void arf_register_values(VALUE* values, size_t n) {
-//   if (!gc_value_holder_struct)
-//     __nm_initialize_value_container();
-//   if (values) {
-//     NM_GC_LL_NODE* to_insert = NULL;
-//     if (allocated_pool->start) {
-//       to_insert = allocated_pool->start;
-//       allocated_pool->start = to_insert->next;
-//     } else {
-//       to_insert = NM_ALLOC_NONRUBY(NM_GC_LL_NODE);
-//     }
-//     to_insert->val = values;
-//     to_insert->n = n;
-//     to_insert->next = gc_value_holder_struct->start;
-//     gc_value_holder_struct->start = to_insert;
-//   }
-// }
