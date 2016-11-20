@@ -10,7 +10,7 @@ typedef struct AF_STRUCT
   size_t ndims;
   size_t count;
   size_t* dimension;
-  size_t* array;
+  double* array;
 }afstruct;
 
 #ifndef HAVE_RB_ARRAY_CONST_PTR
@@ -48,7 +48,8 @@ extern "C" {
   void Init_arrayfire();
   static void test();
   // External API
-  static void createArray(VALUE args, afstruct *afarray);
+  static void createArray(afstruct *afarray);
+  static void hostArray(afstruct *afarray);
 
 #ifdef __cplusplus
 }

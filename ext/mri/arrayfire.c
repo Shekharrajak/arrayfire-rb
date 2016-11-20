@@ -45,6 +45,10 @@ static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val);
 static VALUE arf_eqeq(VALUE left_val, VALUE right_val);
 
 
+static VALUE arf_matmul(VALUE self, VALUE left_val, VALUE right_val);
+static VALUE arf_cholesky(VALUE self, VALUE val);
+
+
 void Init_arrayfire() {
   ArrayFire = rb_define_module("ArrayFire");
   rb_define_method(ArrayFire, "test1", (METHOD)test1, 0);
@@ -63,8 +67,10 @@ void Init_arrayfire() {
   rb_define_method(Device, "getInfo", (METHOD)get_info, 0);
 
   Blas = rb_define_class_under(ArrayFire, "BLAS", rb_cObject);
+  rb_define_singleton_method(Blas, "matmul", (METHOD)arf_matmul, 2);
 
   Lapack = rb_define_class_under(ArrayFire, "LAPACK", rb_cObject);
+  rb_define_singleton_method(Lapack, "cholesky", (METHOD)arf_cholesky, 1);
 }
 
 VALUE test1(VALUE self) {
@@ -78,21 +84,27 @@ VALUE arf_init(int argc, VALUE* argv, VALUE self)
   afstruct* afarray;
   Data_Get_Struct(self, afstruct, afarray);
   afarray->ndims = FIX2LONG(argv[0]);
-  afarray->dimension = ALLOC_N(size_t, argv[0]);
+  afarray->dimension = ALLOC_N(VALUE, argv[0]);
   size_t count = 1;
   for (size_t index = 0; index < FIX2LONG(argv[0]); index++) {
-    afarray->dimension[index] = FIX2UINT(RARRAY_AREF(argv[1], index));
-    printf("%d\n", afarray->dimension[index]);
+    afarray->dimension[index] = FIX2LONG(RARRAY_AREF(argv[1], index));
+    // printf("%d\n", afarray->dimension[index]);
     count *= afarray->dimension[index];
   }
   afarray->count = count;
-  afarray->array = ALLOC_N(size_t, count);
+  afarray->array = ALLOC_N(double, count);
   for (size_t index = 0; index < count; index++) {
-    afarray->array[index] = FIX2INT(RARRAY_AREF(argv[2], index));
+    afarray->array[index] = NUM2DBL(RARRAY_AREF(argv[2], index));
+  }
+  dim_t dims[afarray->ndims] ;
+
+  for (size_t index = 0; index < afarray->ndims; ++index){
+    dims[index] = (dim_t)afarray->dimension[index];
   }
 
-  // arf::createArray(afarray);
-  // af_create_array( &afarray->arr, &afarray->array, ndims, dimension,f64 );
+  af_create_array( &afarray->arr, afarray->array, afarray->ndims, dims, f64 );
+
+  af_print_array(afarray->arr);
   return self;
 }
 
@@ -126,7 +138,13 @@ static VALUE dimension(VALUE self)
 
   Data_Get_Struct(self, afstruct, af);
 
-  return rb_ary_new4(af->ndims, af->dimension);
+  VALUE* dimension = ALLOC_N(VALUE, af->ndims);
+
+  for (size_t index = 0; index < af->ndims; ++index){
+    dimension[index] = INT2FIX(af->dimension[index]);
+  }
+
+  return rb_ary_new4(af->ndims, dimension);
 }
 
 static VALUE array(VALUE self)
@@ -134,9 +152,14 @@ static VALUE array(VALUE self)
   afstruct * af;
 
   Data_Get_Struct(self, afstruct, af);
-  printf("%d\n", af->count);
-  // return Qnil;
-  return rb_ary_new4(af->count, af->array);
+
+  VALUE* array = ALLOC_N(VALUE, af->count);
+
+  for (size_t index = 0; index < af->count; ++index){
+    array[index] = DBL2NUM(af->array[index]);
+  }
+
+  return rb_ary_new4(af->count, array);
 }
 
 static void array2(VALUE self){
@@ -171,6 +194,8 @@ static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val) {
   result->dimension = left->dimension;
   af_add( &result->arr, left->arr, right->arr, 0);
 
+  af_print_array(result->arr);
+
   return Data_Wrap_Struct(CLASS_OF(left_val), NULL, arf_free, result);
 }
 
@@ -201,4 +226,41 @@ static VALUE arf_eqeq(VALUE left_val, VALUE right_val) {
   }
 
   return Qtrue;
+}
+
+static VALUE arf_matmul(VALUE self, VALUE left_val, VALUE right_val){
+
+  afstruct* left;
+  afstruct* right;
+  afstruct* result = ALLOC(afstruct);
+
+  Data_Get_Struct(left_val, afstruct, left);
+  Data_Get_Struct(right_val, afstruct, right);
+
+
+  result->ndims = left->ndims;
+  result->dimension = left->dimension;
+
+  af_matmul( &result->arr, left->arr, right->arr, AF_MAT_NONE, AF_MAT_NONE );
+
+  af_print_array(result->arr);
+  return Qnil;
+}
+
+static VALUE arf_cholesky(VALUE self, VALUE val){
+
+  afstruct* matrix;
+  afstruct* result = ALLOC(afstruct);
+
+  Data_Get_Struct(val, afstruct, matrix);
+
+
+  result->ndims = matrix->ndims;
+  result->dimension = matrix->dimension;
+
+  af_cholesky( &result->arr, 0, matrix->arr, 1);
+  // arf::hostArray(result);
+
+  af_print_array(result->arr);
+  return Qnil;
 }

@@ -62,21 +62,21 @@ namespace arf {
       printf(" ### peak %g GFLOPS\n", peak);
   }
 
-  static void createArray(VALUE* args, afstruct *afarray)
+  static void createArray(afstruct *afarray)
   {
-    af_array arr;
+    dim_t dims[afarray->ndims] ;
 
-    double data[4] = {1000.0, 2.0, 3.4, 7.0};
-    const dim_t dims[2] = {2,2};
-    af_array a2;
-    af_create_array( &afarray->arr, &data, 2, dims,f64 );
-    // af_create_array( &arr, data, 2, dims,f64 );
-    // af_create_array( &a2, data, 2, dims,f64 );
-    // // array A(100, f64);
-    // af_array out;
+    for (size_t index = 0; index < afarray->ndims; ++index){
+      dims[index] = (dim_t)afarray->dimension[index];
+    }
 
-    // af_add( &out, arr, a2, 0);
-    // af_print_array(out);
+    af_create_array( &afarray->arr, afarray->array, afarray->ndims, dims, f64 );
+
+    af_print_array(afarray->arr);
+  }
+
+  static void hostArray(afstruct *afarray)
+  {
 
   }
 }

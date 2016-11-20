@@ -8,7 +8,7 @@ describe ArrayFire::Af_Array do
     subject { i }
     it { expect(i.ndims).to eq 2 }
     it { expect(i.dimension).to eq [2,2] }
-    # it { expect(i.array).to eq [1,2,3,4] }
+    it { expect(i.array).to eq [1,2,3,4] }
     it{
       pending("only float supported currently")
       expect(i.dtype).to eq :float64
