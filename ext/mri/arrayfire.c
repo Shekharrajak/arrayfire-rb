@@ -47,7 +47,9 @@ static VALUE arf_eqeq(VALUE left_val, VALUE right_val);
 
 static VALUE arf_matmul(VALUE self, VALUE left_val, VALUE right_val);
 static VALUE arf_cholesky(VALUE self, VALUE val);
-
+static VALUE arf_det(VALUE self);
+static VALUE arf_inverse(VALUE self);
+static VALUE arf_norm(VALUE self);
 
 void Init_arrayfire() {
   ArrayFire = rb_define_module("ArrayFire");
@@ -62,6 +64,9 @@ void Init_arrayfire() {
   rb_define_method(Af_Array, "array2", (METHOD)array2, 0);
   rb_define_method(Af_Array, "+",(METHOD)arf_ew_add,1);
   rb_define_method(Af_Array, "==",(METHOD)arf_eqeq,1);
+  rb_define_method(Af_Array, "det",(METHOD)arf_det,0);
+  rb_define_method(Af_Array, "inverse",(METHOD)arf_inverse,0);
+  rb_define_method(Af_Array, "norm",(METHOD)arf_norm,0);
 
   Device = rb_define_class_under(ArrayFire, "Device", rb_cObject);
   rb_define_method(Device, "getInfo", (METHOD)get_info, 0);
@@ -88,7 +93,6 @@ VALUE arf_init(int argc, VALUE* argv, VALUE self)
   size_t count = 1;
   for (size_t index = 0; index < FIX2LONG(argv[0]); index++) {
     afarray->dimension[index] = FIX2LONG(RARRAY_AREF(argv[1], index));
-    // printf("%d\n", afarray->dimension[index]);
     count *= afarray->dimension[index];
   }
   afarray->count = count;
@@ -101,10 +105,6 @@ VALUE arf_init(int argc, VALUE* argv, VALUE self)
   for (size_t index = 0; index < afarray->ndims; ++index){
     dims[index] = (dim_t)afarray->dimension[index];
   }
-
-  af_create_array( &afarray->arr, afarray->array, afarray->ndims, dims, f64 );
-
-  af_print_array(afarray->arr);
   return self;
 }
 
@@ -166,7 +166,6 @@ static void array2(VALUE self){
   afstruct * af;
 
   Data_Get_Struct(self, afstruct, af);
-  af_print_array(af->arr);
 }
 
 static VALUE get_info(VALUE self)
@@ -192,9 +191,8 @@ static VALUE elementwise_op(arf::ewop_t op, VALUE left_val, VALUE right_val) {
 
   result->ndims = left->ndims;
   result->dimension = left->dimension;
-  af_add( &result->arr, left->arr, right->arr, 0);
-
-  af_print_array(result->arr);
+  result->count = left->count;
+  arf::add(result, left, right);
 
   return Data_Wrap_Struct(CLASS_OF(left_val), NULL, arf_free, result);
 }
@@ -239,12 +237,16 @@ static VALUE arf_matmul(VALUE self, VALUE left_val, VALUE right_val){
 
 
   result->ndims = left->ndims;
-  result->dimension = left->dimension;
+  size_t dimension[2];
+  dimension[0] = left->dimension[0];
+  dimension[1] = right->dimension[1];
+  size_t count = dimension[0]*dimension[1];
+  result->dimension = dimension;
+  result->count = count;
 
-  af_matmul( &result->arr, left->arr, right->arr, AF_MAT_NONE, AF_MAT_NONE );
+  arf::matmul(result, left, right);
 
-  af_print_array(result->arr);
-  return Qnil;
+  return Data_Wrap_Struct(CLASS_OF(left_val), NULL, arf_free, result);
 }
 
 static VALUE arf_cholesky(VALUE self, VALUE val){
@@ -257,10 +259,50 @@ static VALUE arf_cholesky(VALUE self, VALUE val){
 
   result->ndims = matrix->ndims;
   result->dimension = matrix->dimension;
+  result->count = matrix->count;
+  arf::cholesky_(result, matrix);
 
-  af_cholesky( &result->arr, 0, matrix->arr, 1);
-  // arf::hostArray(result);
+  return Data_Wrap_Struct(CLASS_OF(val), NULL, arf_free, result);
+}
 
-  af_print_array(result->arr);
-  return Qnil;
+static VALUE arf_det(VALUE self){
+
+  afstruct* matrix;
+  Data_Get_Struct(self, afstruct, matrix);
+
+  af_array m;
+  dim_t dims[matrix->ndims] ;
+  for (size_t index = 0; index < matrix->ndims; ++index){
+    dims[index] = (dim_t)matrix->dimension[index];
+  }
+  af_create_array( &m, matrix->array, matrix->ndims, dims, f64 );
+  double real, imaginary;
+  af_det(&real,&imaginary,m);
+  return DBL2NUM(real);
+}
+
+static VALUE arf_inverse(VALUE self){
+
+  afstruct* matrix;
+  afstruct* result = ALLOC(afstruct);
+
+  Data_Get_Struct(self, afstruct, matrix);
+
+  result->ndims = matrix->ndims;
+  result->dimension = matrix->dimension;
+  result->count = matrix->count;
+  arf::inverse_(result, matrix);
+
+  return Data_Wrap_Struct(CLASS_OF(self), NULL, arf_free, result);
+}
+
+static VALUE arf_norm(VALUE self){
+  afstruct* matrix;
+
+  Data_Get_Struct(self, afstruct, matrix);
+
+  double norm = arf::norm_(matrix);
+
+
+  return DBL2NUM(norm);
 }

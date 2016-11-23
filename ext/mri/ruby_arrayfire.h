@@ -6,7 +6,7 @@
 
 typedef struct AF_STRUCT
 {
-  af_array arr;
+  // af_array arr;
   size_t ndims;
   size_t count;
   size_t* dimension;
@@ -50,6 +50,11 @@ extern "C" {
   // External API
   static void createArray(afstruct *afarray);
   static void hostArray(afstruct *afarray);
+  static void add(afstruct *result, afstruct *left, afstruct *right);
+  static void matmul(afstruct *result, afstruct *left, afstruct *right);
+  static void cholesky_(afstruct *result, afstruct *matrix);
+  static void inverse_(afstruct *result, afstruct *matrix);
+  static double norm_(afstruct *matrix);
 
 #ifdef __cplusplus
 }

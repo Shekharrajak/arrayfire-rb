@@ -70,14 +70,52 @@ namespace arf {
       dims[index] = (dim_t)afarray->dimension[index];
     }
 
-    af_create_array( &afarray->arr, afarray->array, afarray->ndims, dims, f64 );
+    // af_create_array( &afarray->arr, afarray->array, afarray->ndims, dims, f64 );
 
-    af_print_array(afarray->arr);
+    // af_print_array(afarray->arr);
   }
 
   static void hostArray(afstruct *afarray)
   {
 
+  }
+
+  static void add(afstruct *result, afstruct *left, afstruct *right)
+  {
+    array l = array(left->dimension[0], left->dimension[1], left->array);
+    array r = array(right->dimension[0], right->dimension[1], right->array);
+    array res = operator+(l,r);
+    result->array = res.host<double>();
+  }
+
+  static void matmul(afstruct *result, afstruct *left, afstruct *right)
+  {
+    array l = array(left->dimension[0], left->dimension[1], left->array);
+    array r = array(right->dimension[0], right->dimension[1], right->array);
+    array res = matmul(l,r);
+    result->array = res.host<double>();
+  }
+
+  static void cholesky_(afstruct *result, afstruct *matrix)
+  {
+    array m = array(matrix->dimension[0], matrix->dimension[1], matrix->array);
+    bool is_upper = true;
+    array res;
+    cholesky(res, m, is_upper);
+    result->array = res.host<double>();
+  }
+
+  static void inverse_(afstruct *result, afstruct *matrix)
+  {
+    array m = array(matrix->dimension[0], matrix->dimension[1], matrix->array);
+    array res = inverse(m);
+    result->array = res.host<double>();
+  }
+
+  static double norm_(afstruct *matrix)
+  {
+    array m = array(matrix->dimension[0], matrix->dimension[1], matrix->array);
+    return norm(m, AF_NORM_EUCLID, 1, 1);
   }
 }
 extern "C" {
